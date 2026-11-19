@@ -1,0 +1,39 @@
+# Robô de teste: abre um PR em nome do github-actions, para a dona do repositório
+# poder fazer o papel do gestor e aprovar (ninguém aprova o próprio PR).
+name: Abrir proposta de teste
+on: workflow_dispatch
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  proposta:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cria branch, altera e abre o PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          B="reajuste-${{ github.run_number }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$B"
+          sed -i 's/R\$ [0-9]*,00/R$ 15,00/' README.md
+          git commit -am "Reajusta preço de exemplo para R\$ 15,00"
+          git push origin "$B"
+          gh pr create --base main --head "$B" \
+            --title "Proposta: reajustar preço de exemplo para R\$ 15,00" \
+            --body "## O que mudou
+          O preço de exemplo passa para R\$ 15,00.
+
+          ## Por quê
+          Teste do fluxo de aval.
+
+          ## Mexe em cálculo, imposto ou nota fiscal?
+          - [x] Sim. Muda o valor de exemplo.
+
+          ## Como reverter
+          Reverter este PR.
+
+          ## Preciso do seu aval em
+          Aprovar o reajuste, pedir mudança ou sugerir outro valor."
